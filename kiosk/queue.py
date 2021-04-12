@@ -10,7 +10,7 @@ class Queue:
         self.q = list()
 
     def get(self):
-        if list:
+        if self.q:
             return self.q.pop()
         else:
             raise EmptyQueueException

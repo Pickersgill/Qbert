@@ -7,5 +7,5 @@ class Kiosk:
         print(service)
         self.queue = Queue()
 
-    def add_to_queue(self, agent):
+    def enqueueAgent(self, agent):
         self.queue.put(agent)
