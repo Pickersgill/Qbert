@@ -1,2 +1,2 @@
 # Qbert
-Queueing agent simulation.
+An environment for simulating queueing agents.
