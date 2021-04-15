@@ -9,7 +9,7 @@ class Queue:
     def __init__(self):
         self.q = list()
 
-    def get(self):
+    def pop(self):
         if self.q:
             return self.q.pop()
         else:
@@ -19,4 +19,7 @@ class Queue:
         self.q = [agent] + self.q
 
     def __str__(self):
-        return ((str(a) + "\n") for a in self.q)
+        return "".join(((str(a) + "\n") for a in self.q))
+
+    def __len__(self):
+        return len(self.q)
