@@ -47,7 +47,7 @@ class ServerGroup:
 
     def serve_agents(self):
         for server in self.servers:
-            if server.free:
+            if server.free and not self.parent.queue.empty():
                 server.serve(self.parent.queue.pop())
 
     def tick(self):

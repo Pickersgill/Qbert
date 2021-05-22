@@ -6,6 +6,10 @@ class EmptyQueueException(Exception):
 
 class Queue:
 
+    '''
+    A simple Queue object. Behaves like a regular queue.
+    '''
+
     def __init__(self):
         self.q = list()
 
@@ -18,8 +22,13 @@ class Queue:
     def put(self, agent):
         self.q = [agent] + self.q
 
+    def empty(self):
+        return len(self) == 0
+
     def __str__(self):
         return "".join(((str(a) + "\n") for a in self.q))
 
     def __len__(self):
         return len(self.q)
+
+

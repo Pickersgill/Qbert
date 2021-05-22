@@ -66,7 +66,7 @@ Mind object which accepts as a visitor the agent object for whom it is deciding 
 + The agents themselves are really just a collection of attributes describing the agents position, queueing
     status, task list etc.
 
-+ The agent will be assigned a mind at bith (dystopian!). It will ask the mind what it should do when
++ The agent will be assigned a mind at birth (dystopian!). It will ask the mind what it should do when
     appropriate.
 
 ### The Minds:
@@ -75,7 +75,7 @@ Mind object which accepts as a visitor the agent object for whom it is deciding 
     It is a collection of functions which will decide how an agent should behave.
 
 + The available actions should be predefined. Really the only thing the agent needs to decide is which queue
-    to "target".
+    to "target" but a health set of actions would be: ["run", "walk", "face", "queue"]
 
 ### The Kiosks:
 
@@ -85,7 +85,7 @@ Mind object which accepts as a visitor the agent object for whom it is deciding 
 
 + How many servers there are.
 
-+ How long (UT) does a server take.
++ How long (UTS) does a server take.
 
 + What service is it providing?
 
