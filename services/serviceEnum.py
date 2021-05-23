@@ -1,5 +1,7 @@
 from enum import Enum
 
+import random
+
 class ServiceEnum(Enum):
     RED = 1
     GREEN = 2
@@ -7,4 +9,8 @@ class ServiceEnum(Enum):
     YELLOW = 4
     ORANGE = 5
     PURPLE = 6
+
+    @classmethod
+    def random(cls):
+        return random.choice(list(ServiceEnum))
 

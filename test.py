@@ -4,6 +4,7 @@ from kiosk import Kiosk, Queue, Server, ServerGroup
 from agents import Agent
 from services import SEnum
 from environment import Env
+from tasks import Task, TaskList
 
 
 DEFAULT_AGENT = Agent()
@@ -56,14 +57,36 @@ class KioskTest(TestCase):
         self.assertTrue(len(k.queue) == 0)
 
 class AgentTest(TestCase):
+
     def testAgentExist(self):
         self.assertTrue(Agent() is not None)
+
+
+class TaskTest(TestCase):
+
+    def testTaskExists(self):
+        try:
+            print("TESTING")
+            self.assertTrue(Task(SEnum.GREEN, priority=1) is not None)
+        except:
+            print("PROBLEM DURING TEST")
+
+    def testTaskListExists(self):
+        print("TESTING")
+        TaskList([Task(SEnum.GREEN, priority=1)])
+    
+    def testTaskCompletion(self):
+        agent = Agent()
+        agent.completeTask(SEnum.GREEN)
+        agent.assignTask(Task(SEnum.GREEN))
+        agent.completeTask(SEnum.GREEN)
+
 
 class EnvironmentTest(TestCase):
 
     def testEnvExists(self):
         self.assertTrue(Env() is not None)
-
+    
     def testAddKioskEnv(self):
         newEnv = Env()
         newEnv.addKiosk(service=SEnum.GREEN, servers=1, service_time=1, position=50)
@@ -92,16 +115,28 @@ class EnvironmentTest(TestCase):
         newEnv.decide()
         newEnv.decide()
         
-    def testWalkToKiosk(self):
+    def testManyWalkToKiosk(self):
         newEnv = Env()
         newEnv.addKiosk(service=SEnum.GREEN, servers=1, service_time=5, position=100)
-        agent = Agent()
-        newEnv.addAgent(agent, (100, 100))
+        newEnv.addKiosk(service=SEnum.BLUE, servers=1, service_time=5, position=150)
+        agent1 = Agent(name="ryan")
+        agent1.assignTask(Task(SEnum.GREEN))
+        newEnv.addAgent(agent1, (100, 100))
+        agent2 = Agent(name="todd")
+        agent2.assignTask(Task(SEnum.BLUE))
+        newEnv.addAgent(agent2, (150, 100))
+    
+        old1 = agent1.tasks.allComplete()
+        old2 = agent2.tasks.allComplete()
 
-        for i in range(100):
-            print("tick", i)
+        while not newEnv.shouldTerminate():
+            print("tick", newEnv.time)
             newEnv.cycle()
         
+        print(old1, agent1.tasks.allComplete())
+        print(old2, agent2.tasks.allComplete())
 
 if __name__ == '__main__':
     unittest.main()
+
+

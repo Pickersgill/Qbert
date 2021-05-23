@@ -1,6 +1,7 @@
 from kiosk import Kiosk
 from agents import ActEnum
-from event import EventLogger
+from event import EventLogger, CompleteTaskEvent, AssignTaskEvent, MoveEvent, TurnEvent, JoinQueueEvent, LeaveQueueEvent, FailQueueEvent, CreateKioskEvent, CreateAgentEvent
+from . import env_utils
 
 import math
 
@@ -11,17 +12,17 @@ ENTRANCE_SIZE = 10
 
 class Environment:
 
-
-    def __init__(self, w=200, h=200):
+    def __init__(self, w=200, h=200, time_limit=1000):
         self.kiosks = list()
         self.agents = list()
         self.width = w
         self.height = h
         self.event_logger = EventLogger()
+        self.time_limit = time_limit
         self.time = 0
 
-    def addKiosk(self, service=None, servers=1, service_time=1, position=0):
-        ent = self.num_to_perimeter(position)
+    def add_kiosk(self, service=None, servers=1, service_time=1, position=None):
+        ent = env_utils.num_to_perimeter(self, position)
         newk = Kiosk(
               env=self,
               service=service, 
@@ -31,16 +32,28 @@ class Environment:
             )
     
         self.kiosks.append(newk)
+        self.emit(CreateKioskEvent(newk, self.time))
 
-    def addAgent(self, agent, position):
+    def add_agent(self, agent, position):
         self.agents.append(agent)
-        agent.setPosition(position)
-        print("SPAWNING NEW AGENT")
+        agent.set_position(position)
+        self.emit(CreateAgentEvent(agent, self.time))
 
-    def respawn_agent(self, agent, position):
-        agent.setPosition(position)
+    def unqueue_agent(self, agent, kiosk):
+        agent.set_position(kiosk.entrance)
+        completed_task = agent.complete_task(kiosk.service)
         agent.queueing = False
-        print(f"SPAWNING AGENT AT ({position[0]}, {position[1]})")
+        self.emit(LeaveQueueEvent(agent, self.time, kiosk))
+        if completed_task:
+            self.emit(CompleteTaskEvent(agent, self.time, completed_task))
+
+    def assign_task(self, agent, task):
+        agent._assign_task(task)
+        self.emit(AssignTaskEvent(agent, self.time, task))
+    
+    def assign_tasks(self, agent, tasks):
+        for t in tasks:
+            self.assign_task(agent, t)
 
     def cycle(self):
         self.tick()
@@ -48,7 +61,7 @@ class Environment:
 
     def tick(self):
         for agent in self.agents:
-            agent.tick()
+            agent.tick(self)
         for kiosk in self.kiosks:
             kiosk.tick()
         self.time += 1
@@ -63,45 +76,47 @@ class Environment:
         t = action.act_type
 
         if t is ActEnum.WALK:
-            self.doWalk(agent)
+            self.do_walk(agent)
         elif t is ActEnum.RUN:
-            self.doRun(agent)
+            self.do_run(agent)
         elif t is ActEnum.FACE:
-            self.doFace(agent, *action.args)
+            self.do_face(agent, *action.args)
         elif t is ActEnum.QUEUE:
-            self.doQueue(agent)
+            self.do_queue(agent)
+        elif t is ActEnum.IDLE:
+            self.do_idle(agent, *action.args)
 
-    def doWalk(self, agent):
-        print(f"AGENT: {str(agent)} IS WALKING")
-        self._doMove(agent, WALK_DIST)
+    def do_walk(self, agent):
+        self._do_move(agent, WALK_DIST)
         
-    def doRun(self, agent):
+    def do_run(self, agent):
         # SAME AS WALK BUT WITH GREATER DISTANCE
-        print(f"AGENT: {str(agent)} IS RUNNING")
-        self._doMove(agent, RUN_DIST)
+        self._do_move(agent, RUN_DIST)
 
-    def doFace(self, agent, direction):
+    def do_face(self, agent, direction):
         # SET AGENT TO FACE IN DIRECTION (DEGREES)
-        print(f"AGENT: {str(agent)} IS CHANGING DIRECTION")
         agent.facing = direction
+        self.emit(TurnEvent(agent, self.time, direction))
 
-    def doQueue(self, agent):
+    def do_queue(self, agent):
         # JOIN QUEUE IF POSSIBLE
-        near = self.get_nearest_kiosk(agent)
-        if self.get_dist(agent.position, near.entrance) <= ENTRANCE_SIZE:
+        near = env_utils.get_nearest_kiosk(agent, self)
+        if env_utils.get_dist(agent.position, near.entrance) <= ENTRANCE_SIZE:
             self.enqueue(agent, near)
-            self.event_logger.log(f"AGENT {str(agent)} JOINED QUEUE FOR {str(near)}")
-           # TODO MAKE AN AGENT WALK TO A QUEUE AND JOIN
+            self.emit(JoinQueueEvent(agent, self.time, near))
         else:
-            self.event_logger.log(f"FAILED QUEUE ATTEMPT BY AGENT {str(agent)}")
+            self.emit(FailQueueEvent(agent, self.time))
     
-    def _doMove(self, agent, dist):
+    def do_idle(self, agent, message=""):
+        pass
+
+    def _do_move(self, agent, dist):
         f = agent.facing
         cx = agent.position[0]
         cy = agent.position[1]
         
-        nx = cx + round(dist * math.sin(math.radians(f)))
-        ny = cy - round(dist * math.cos(math.radians(f)))
+        nx = cx + (dist * math.sin(math.radians(f)))
+        ny = cy - (dist * math.cos(math.radians(f)))
 
         if nx < 0:
             nx = 0
@@ -112,47 +127,29 @@ class Environment:
         elif ny > self.height:
             ny = self.height
 
-        agent.setPosition((nx, ny))
-        self.emit(f"AGENT POSITION CHANGED TO {(nx, ny)}")
+        agent.set_position((nx, ny))
+        self.emit(MoveEvent(agent, self.time, (nx, ny)))
 
     def enqueue(self, agent, kiosk):
         agent.queueing = True
         kiosk.enqueue_agent(agent)
 
-    def num_to_perimeter(self, num):
-        w = self.width
-        h = self.height
-        num = num % (w + w + h + h)
-        if num <= w:
-            x = num
-            y = 0
-        elif num <= w + h:
-            x = w
-            y = num % w
-        elif num <= w + w + h:
-            x = w - num % w + h
-            y = h
-        elif num <= w + w + h + h:
-            x = 0
-            y = h - num % w + w + h
-    
-        return (x, y)
-
-    def get_nearest_kiosk(self, agent):
-        near_dist = -1
-        near = None
-        for kiosk in self.kiosks:
-            c_dist = self.get_dist(agent.position, kiosk.entrance)
-            if c_dist <= near_dist or near_dist == -1:
-                near_dist = c_dist
-                near = kiosk
-
-        return near
-
-    def get_dist(self, pos1, pos2):
-        xdif = abs(pos1[0] - pos2[0])
-        ydif = abs(pos1[1] - pos2[1])
-        return math.sqrt(xdif * xdif + ydif * ydif)
-        
     def emit(self, event):
         self.event_logger.log(event)
+
+    def should_terminate(self):
+        if self.time_limit > 0 and self.time >= self.time_limit:
+            print("TERMINATING DUE TO TIME LIMIT: FAILURE")
+            return True
+
+        term = True
+        for agent in self.agents:
+            if not agent.done():
+                return False
+        
+        print("##############ALL AGENTS DONE#############")
+        print("SUCCESS AT TIME: ", self.time)
+
+        return term
+
+

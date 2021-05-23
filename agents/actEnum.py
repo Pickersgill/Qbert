@@ -5,9 +5,10 @@ class ActEnum(Enum):
     RUN = 2
     FACE = 3
     QUEUE = 4
+    IDLE = 5
     
 class Act:
-    def __init__(self, act_type, args):
+    def __init__(self, act_type, args=[]):
         self.act_type = act_type
         self.args = args
 

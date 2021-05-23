@@ -27,7 +27,7 @@ class Kiosk:
         self.queue.put(agent)
 
     def unqueue_agent(self, agent):
-        self.parent.respawn_agent(agent, self.entrance)
+        self.parent.unqueue_agent(agent, self)
 
     def get_service_time(self):
         return self.service_time
