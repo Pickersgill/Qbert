@@ -17,7 +17,7 @@ class Environment:
         self.agents = list()
         self.width = w
         self.height = h
-        self.event_logger = EventLogger()
+        self.event_logger = EventLogger(w, h, time_limit)
         self.time_limit = time_limit
         self.time = 0
 

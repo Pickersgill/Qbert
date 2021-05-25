@@ -38,7 +38,9 @@ class AssignTaskEvent:
             "time" : self.time,
             "event" : EventEnum.ASSIGN_TASK.name,
             "agent" : id(self.agent),
-            "task" : id(self.task) 
+            "task" : id(self.task),
+            "service" : self.task.service.name,
+            "priority" : self.task.priority
         }
 
         return json_dict
@@ -55,8 +57,7 @@ class MoveEvent:
             "time" : self.time,
             "event" : EventEnum.MOVE_TO.name,
             "agent" : id(self.agent),
-            "x" : self.x,
-            "y" : self.y 
+            "pos" : (self.x, self.y)
         }
 
         return json_dict

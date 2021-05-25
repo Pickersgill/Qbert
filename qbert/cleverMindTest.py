@@ -7,7 +7,7 @@ from tasks import Task, TaskList
 import environment
 import random
 
-TIMEOUT = 350
+TIMEOUT = 1000
 AGENTS = 20
 
 class CleverMind:
@@ -42,7 +42,7 @@ class CleverMind:
 names = list(n for n in open("names.txt"))
 
 def generate_simple_env():
-    simpleEnv = Env(time_limit=TIMEOUT)
+    simpleEnv = Env(time_limit=TIMEOUT, w=600, h=600)
     for service in SEnum:
         simpleEnv.add_kiosk(service=service, servers=1, service_time=5)
     
@@ -56,7 +56,7 @@ def populate_env(env, agents=1, tasks=1):
         env.add_agent(new_agent, spawn_pos)
 
         for t in range(tasks):
-            env.assign_task(new_agent, Task(SEnum.RED))
+            env.assign_task(new_agent, Task(SEnum.random()))
     
 def start(env):
     while not env.should_terminate():
