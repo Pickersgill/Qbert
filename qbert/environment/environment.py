@@ -5,7 +5,7 @@ from . import env_utils
 
 import math
 
-WALK_DIST = 2
+WALK_DIST = 5
 RUN_DIST = 2 * WALK_DIST
 ENTRANCE_SIZE = 10
 

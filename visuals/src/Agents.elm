@@ -17,14 +17,26 @@ getAgent id agents =
 
 moveAgent : Int -> Pos -> AgentList -> AgentList
 moveAgent id newPos agents = 
-    map (\a -> moveIfID a id newPos) agents
+    doIfID id (\a -> {a | pos = newPos}) agents
 
-moveIfID : Agent -> Int -> Pos -> Agent
-moveIfID agent id newPos =
-    if hasID agent id then
-        {agent | pos = newPos}
-    else
-        agent
+assignTask : Int -> Task -> AgentList -> AgentList
+assignTask agentID task agents =
+    doIfID agentID (\a -> {a | tasks = task :: a.tasks}) agents
+
+completeTask : Int -> Int -> AgentList -> AgentList
+completeTask agentID taskID agents =
+    doIfID agentID (\a -> {a | tasks = (makeComplete taskID a.tasks)}) agents
+
+remainingTasks : Agent -> Int
+remainingTasks agent = List.length (filter (\t -> not t.complete) agent.tasks)
+
+leave : Int -> AgentList -> AgentList
+leave id agents =
+    filter (\a -> not (hasID a id)) agents
+
+doIfID : Int -> (Agent -> Agent) -> AgentList -> AgentList
+doIfID id do agents = 
+    map (\a -> if (hasID a id) then do a else a) agents
 
 hasID : Agent -> Int -> Bool
 hasID agent id = agent.id == id

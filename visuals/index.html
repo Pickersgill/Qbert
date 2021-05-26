@@ -5482,9 +5482,9 @@ var $elm$browser$Browser$Events$onAnimationFrame = $elm$browser$Browser$Animatio
 var $author$project$SeeQcumber$subscriptions = function (model) {
 	return $elm$browser$Browser$Events$onAnimationFrame($author$project$SeeQcumber$NextFrame);
 };
-var $author$project$SeeQcumber$EnvState = F3(
-	function (pause, time, agents) {
-		return {agents: agents, pause: pause, time: time};
+var $author$project$SeeQcumber$EnvState = F4(
+	function (pause, time, agents, kiosks) {
+		return {agents: agents, kiosks: kiosks, pause: pause, time: time};
 	});
 var $author$project$SeeQcumber$FileChosen = function (a) {
 	return {$: 'FileChosen', a: a};
@@ -5577,24 +5577,150 @@ var $author$project$Agents$Agent = F5(
 	function (id, pos, dir, colour, tasks) {
 		return {colour: colour, dir: dir, id: id, pos: pos, tasks: tasks};
 	});
+var $author$project$Kiosks$Kiosk = F6(
+	function (id, entrance, service, servers, serve_time, servingAgents) {
+		return {entrance: entrance, id: id, serve_time: serve_time, servers: servers, service: service, servingAgents: servingAgents};
+	});
+var $author$project$Tasks$Task = F4(
+	function (id, service, priority, complete) {
+		return {complete: complete, id: id, priority: priority, service: service};
+	});
 var $author$project$Agents$hasID = F2(
 	function (agent, id) {
 		return _Utils_eq(agent.id, id);
 	});
-var $author$project$Agents$moveIfID = F3(
-	function (agent, id, newPos) {
-		return A2($author$project$Agents$hasID, agent, id) ? _Utils_update(
-			agent,
-			{pos: newPos}) : agent;
-	});
-var $author$project$Agents$moveAgent = F3(
-	function (id, newPos, agents) {
+var $author$project$Agents$doIfID = F3(
+	function (id, _do, agents) {
 		return A2(
 			$elm$core$List$map,
 			function (a) {
-				return A3($author$project$Agents$moveIfID, a, id, newPos);
+				return A2($author$project$Agents$hasID, a, id) ? _do(a) : a;
 			},
 			agents);
+	});
+var $author$project$Agents$assignTask = F3(
+	function (agentID, task, agents) {
+		return A3(
+			$author$project$Agents$doIfID,
+			agentID,
+			function (a) {
+				return _Utils_update(
+					a,
+					{
+						tasks: A2($elm$core$List$cons, task, a.tasks)
+					});
+			},
+			agents);
+	});
+var $author$project$Tasks$hasID = F2(
+	function (task, id) {
+		return _Utils_eq(task.id, id);
+	});
+var $author$project$Tasks$makeComplete = F2(
+	function (id, tasks) {
+		return A2(
+			$elm$core$List$map,
+			function (t) {
+				return A2($author$project$Tasks$hasID, t, id) ? _Utils_update(
+					t,
+					{complete: true}) : t;
+			},
+			tasks);
+	});
+var $author$project$Agents$completeTask = F3(
+	function (agentID, taskID, agents) {
+		return A3(
+			$author$project$Agents$doIfID,
+			agentID,
+			function (a) {
+				return _Utils_update(
+					a,
+					{
+						tasks: A2($author$project$Tasks$makeComplete, taskID, a.tasks)
+					});
+			},
+			agents);
+	});
+var $author$project$Agents$moveAgent = F3(
+	function (id, newPos, agents) {
+		return A3(
+			$author$project$Agents$doIfID,
+			id,
+			function (a) {
+				return _Utils_update(
+					a,
+					{pos: newPos});
+			},
+			agents);
+	});
+var $author$project$Kiosks$hasID = F2(
+	function (kiosk, id) {
+		return _Utils_eq(kiosk.id, id);
+	});
+var $author$project$Kiosks$enqueue = F3(
+	function (kioskID, agent, kiosks) {
+		return A2(
+			$elm$core$List$map,
+			function (k) {
+				return A2($author$project$Kiosks$hasID, k, kioskID) ? _Utils_update(
+					k,
+					{
+						servingAgents: A2($elm$core$List$cons, agent, k.servingAgents)
+					}) : k;
+			},
+			kiosks);
+	});
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var $elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(x);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $author$project$Agents$getAgent = F2(
+	function (id, agents) {
+		return $elm$core$List$head(
+			A2(
+				$elm$core$List$filter,
+				function (a) {
+					return A2($author$project$Agents$hasID, a, id);
+				},
+				agents));
+	});
+var $elm$core$Basics$not = _Basics_not;
+var $author$project$Agents$leave = F2(
+	function (id, agents) {
+		return A2(
+			$elm$core$List$filter,
+			function (a) {
+				return !A2($author$project$Agents$hasID, a, id);
+			},
+			agents);
+	});
+var $author$project$Kiosks$queueAgent = F4(
+	function (agent, kiosk, agents, kiosks) {
+		var queueingAgent = A2($author$project$Agents$getAgent, agent, agents);
+		if (queueingAgent.$ === 'Just') {
+			var value = queueingAgent.a;
+			return _Utils_Tuple2(
+				A2($author$project$Agents$leave, agent, agents),
+				A3($author$project$Kiosks$enqueue, kiosk, value, kiosks));
+		} else {
+			return _Utils_Tuple2(agents, kiosks);
+		}
 	});
 var $avh4$elm_color$Color$RgbaSpace = F4(
 	function (a, b, c, d) {
@@ -5611,6 +5737,56 @@ var $avh4$elm_color$Color$rgb255 = F3(
 			$avh4$elm_color$Color$scaleFrom255(g),
 			$avh4$elm_color$Color$scaleFrom255(b),
 			1.0);
+	});
+var $elm$core$Tuple$second = function (_v0) {
+	var y = _v0.b;
+	return y;
+};
+var $author$project$Kiosks$getKiosk = F2(
+	function (id, kiosks) {
+		return $elm$core$List$head(
+			A2(
+				$elm$core$List$filter,
+				function (k) {
+					return A2($author$project$Kiosks$hasID, k, id);
+				},
+				kiosks));
+	});
+var $author$project$Kiosks$unqueue = F3(
+	function (kioskID, agentID, kiosks) {
+		return A2(
+			$elm$core$List$map,
+			function (k) {
+				return A2($author$project$Kiosks$hasID, k, kioskID) ? _Utils_update(
+					k,
+					{
+						servingAgents: A2($author$project$Agents$leave, agentID, k.servingAgents)
+					}) : k;
+			},
+			kiosks);
+	});
+var $author$project$Kiosks$unqueueAgent = F4(
+	function (agent, kiosk, agents, kiosks) {
+		var servedKiosk = A2($author$project$Kiosks$getKiosk, kiosk, kiosks);
+		if (servedKiosk.$ === 'Just') {
+			var kioskValue = servedKiosk.a;
+			var servedAgent = A2($author$project$Agents$getAgent, agent, kioskValue.servingAgents);
+			if (servedAgent.$ === 'Just') {
+				var agentValue = servedAgent.a;
+				return _Utils_Tuple2(
+					A2(
+						$elm$core$List$cons,
+						_Utils_update(
+							agentValue,
+							{pos: kioskValue.entrance}),
+						agents),
+					A3($author$project$Kiosks$unqueue, kiosk, agent, kiosks));
+			} else {
+				return _Utils_Tuple2(agents, kiosks);
+			}
+		} else {
+			return _Utils_Tuple2(agents, kiosks);
+		}
 	});
 var $author$project$SeeQcumber$doEvent = F2(
 	function (event, state) {
@@ -5629,6 +5805,42 @@ var $author$project$SeeQcumber$doEvent = F2(
 							A5($author$project$Agents$Agent, id, pos, dir, colour, tasks),
 							state.agents)
 					});
+			case 'KioskCreatedEvent':
+				var id = event.b;
+				var pos = event.c;
+				var service = event.d;
+				var servers = event.e;
+				var serve_time = event.f;
+				return _Utils_update(
+					state,
+					{
+						kiosks: A2(
+							$elm$core$List$cons,
+							A6($author$project$Kiosks$Kiosk, id, pos, service, servers, serve_time, _List_Nil),
+							state.kiosks)
+					});
+			case 'AssignTaskEvent':
+				var task = event.b;
+				var agent = event.c;
+				var service = event.d;
+				var _int = event.e;
+				return _Utils_update(
+					state,
+					{
+						agents: A3(
+							$author$project$Agents$assignTask,
+							agent,
+							A4($author$project$Tasks$Task, task, service, _int, false),
+							state.agents)
+					});
+			case 'CompleteTaskEvent':
+				var agent = event.b;
+				var task = event.c;
+				return _Utils_update(
+					state,
+					{
+						agents: A3($author$project$Agents$completeTask, agent, task, state.agents)
+					});
 			case 'MoveEvent':
 				var id = event.b;
 				var pos = event.c;
@@ -5637,6 +5849,24 @@ var $author$project$SeeQcumber$doEvent = F2(
 					{
 						agents: A3($author$project$Agents$moveAgent, id, pos, state.agents)
 					});
+			case 'JoinQueueEvent':
+				var agent = event.b;
+				var kiosk = event.c;
+				var newLists = A4($author$project$Kiosks$queueAgent, agent, kiosk, state.agents, state.kiosks);
+				var newKiosks = newLists.b;
+				var newAgents = newLists.a;
+				return _Utils_update(
+					state,
+					{agents: newAgents, kiosks: newKiosks});
+			case 'LeaveQueueEvent':
+				var agent = event.b;
+				var kiosk = event.c;
+				var newLists = A4($author$project$Kiosks$unqueueAgent, agent, kiosk, state.agents, state.kiosks);
+				var newKiosks = newLists.b;
+				var newAgents = newLists.a;
+				return _Utils_update(
+					state,
+					{agents: newAgents, kiosks: newKiosks});
 			default:
 				return state;
 		}
@@ -5645,10 +5875,6 @@ var $author$project$SeeQcumber$performEvents = F2(
 	function (state, events) {
 		return A3($elm$core$List$foldl, $author$project$SeeQcumber$doEvent, state, events);
 	});
-var $elm$core$Tuple$second = function (_v0) {
-	var y = _v0.b;
-	return y;
-};
 var $author$project$SeeQcumber$doEvents = function (model) {
 	if (model.$ === 'Ready') {
 		var _v1 = model.a;
@@ -5867,7 +6093,6 @@ var $author$project$SeeQcumber$logDecoder = A3(
 	$author$project$SeeQcumber$Log,
 	A2($elm$json$Json$Decode$field, 'env', $author$project$SeeQcumber$envDecoder),
 	A2($elm$json$Json$Decode$field, 'events', $author$project$Events$eventListDecoder));
-var $elm$core$Basics$not = _Basics_not;
 var $elm$file$File$toString = _File_toString;
 var $author$project$SeeQcumber$updateTime = function (model) {
 	if (model.$ === 'Ready') {
@@ -5918,7 +6143,7 @@ var $author$project$SeeQcumber$update = F2(
 						A2(
 							$author$project$SeeQcumber$Ready,
 							value,
-							A3($author$project$SeeQcumber$EnvState, true, 0, _List_Nil)),
+							A4($author$project$SeeQcumber$EnvState, true, 0, _List_Nil, _List_Nil)),
 						$elm$core$Platform$Cmd$none);
 				}
 			case 'NextFrame':
@@ -5945,6 +6170,17 @@ var $author$project$SeeQcumber$update = F2(
 		}
 	});
 var $elm$html$Html$div = _VirtualDom_node('div');
+var $elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
+		}
+	});
+var $elm$core$List$concat = function (lists) {
+	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
+};
 var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
 var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
 var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
@@ -5986,7 +6222,7 @@ var $avh4$elm_color$Color$toCssString = function (_v0) {
 				')'
 			]));
 };
-var $author$project$SeeQcumber$agentDot = function (agent) {
+var $author$project$SeeQcumber$drawAgent = function (agent) {
 	var y = $elm$core$String$fromFloat(agent.pos.y);
 	var x = $elm$core$String$fromFloat(agent.pos.x);
 	var col = $avh4$elm_color$Color$toCssString(agent.colour);
@@ -6002,20 +6238,68 @@ var $author$project$SeeQcumber$agentDot = function (agent) {
 			]),
 		_List_Nil);
 };
-var $elm$core$List$append = F2(
-	function (xs, ys) {
-		if (!ys.b) {
-			return xs;
-		} else {
-			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
-		}
-	});
+var $author$project$Events$serviceToColour = function (service) {
+	switch (service.$) {
+		case 'Green':
+			return 'Green';
+		case 'Red':
+			return 'Red';
+		case 'Blue':
+			return 'Blue';
+		case 'Yellow':
+			return 'Yellow';
+		case 'Orange':
+			return 'Orange';
+		case 'Purple':
+			return 'Purple';
+		default:
+			return 'Black';
+	}
+};
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $elm$svg$Svg$Attributes$textAnchor = _VirtualDom_attribute('text-anchor');
+var $elm$svg$Svg$text_ = $elm$svg$Svg$trustedNode('text');
+var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
+var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
+var $author$project$SeeQcumber$drawKiosk = function (kiosk) {
+	var py = $elm$core$String$fromFloat(kiosk.entrance.y);
+	var px = $elm$core$String$fromFloat(kiosk.entrance.x);
+	var col = $author$project$Events$serviceToColour(kiosk.service);
+	return _List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$circle,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$cx(px),
+					$elm$svg$Svg$Attributes$cy(py),
+					$elm$svg$Svg$Attributes$fill(col),
+					$elm$svg$Svg$Attributes$stroke('black'),
+					$elm$svg$Svg$Attributes$r('20')
+				]),
+			_List_Nil),
+			A2(
+			$elm$svg$Svg$text_,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x(px),
+					$elm$svg$Svg$Attributes$y(py),
+					$elm$svg$Svg$Attributes$fill('black'),
+					$elm$svg$Svg$Attributes$textAnchor('middle')
+				]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text(
+					$elm$core$String$fromInt(
+						$elm$core$List$length(kiosk.servingAgents)))
+				]))
+		]);
+};
 var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
 var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
 var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
 var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
-var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
-var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
 var $author$project$SeeQcumber$envCanvas = F2(
 	function (env, state) {
 		var w = $elm$core$String$fromInt(env.width);
@@ -6028,24 +6312,28 @@ var $author$project$SeeQcumber$envCanvas = F2(
 					$elm$svg$Svg$Attributes$height(h),
 					$elm$svg$Svg$Attributes$fill('Black')
 				]),
-			A2(
-				$elm$core$List$append,
+			$elm$core$List$concat(
 				_List_fromArray(
 					[
-						A2(
-						$elm$svg$Svg$rect,
 						_List_fromArray(
-							[
-								$elm$svg$Svg$Attributes$x('0'),
-								$elm$svg$Svg$Attributes$y('0'),
-								$elm$svg$Svg$Attributes$width(w),
-								$elm$svg$Svg$Attributes$height(h),
-								$elm$svg$Svg$Attributes$fill('Gray'),
-								$elm$svg$Svg$Attributes$stroke('Black')
-							]),
-						_List_Nil)
-					]),
-				A2($elm$core$List$map, $author$project$SeeQcumber$agentDot, state.agents)));
+						[
+							A2(
+							$elm$svg$Svg$rect,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$x('0'),
+									$elm$svg$Svg$Attributes$y('0'),
+									$elm$svg$Svg$Attributes$width(w),
+									$elm$svg$Svg$Attributes$height(h),
+									$elm$svg$Svg$Attributes$fill('Gray'),
+									$elm$svg$Svg$Attributes$stroke('Black')
+								]),
+							_List_Nil)
+						]),
+						A2($elm$core$List$map, $author$project$SeeQcumber$drawAgent, state.agents),
+						$elm$core$List$concat(
+						A2($elm$core$List$map, $author$project$SeeQcumber$drawKiosk, state.kiosks))
+					])));
 	});
 var $author$project$SeeQcumber$PlayPause = {$: 'PlayPause'};
 var $elm$html$Html$button = _VirtualDom_node('button');
@@ -6066,8 +6354,6 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$SeeQcumber$playButton = function (paused) {
 	if (paused) {
 		return A2(
@@ -6094,6 +6380,18 @@ var $author$project$SeeQcumber$playButton = function (paused) {
 	}
 };
 var $elm$html$Html$pre = _VirtualDom_node('pre');
+var $author$project$Agents$remainingTasks = function (agent) {
+	return $elm$core$List$length(
+		A2(
+			$elm$core$List$filter,
+			function (t) {
+				return !t.complete;
+			},
+			agent.tasks));
+};
+var $elm$core$List$sum = function (numbers) {
+	return A3($elm$core$List$foldl, $elm$core$Basics$add, 0, numbers);
+};
 var $author$project$SeeQcumber$ChooseFile = {$: 'ChooseFile'};
 var $author$project$SeeQcumber$uploadButton = A2(
 	$elm$html$Html$button,
@@ -6149,6 +6447,13 @@ var $author$project$SeeQcumber$view = function (model) {
 								$elm$html$Html$text(
 								'Events Remaining: ' + $elm$core$String$fromInt(
 									$elm$core$List$length(events))),
+								$elm$html$Html$text(
+								'\nTasks Remaining: ' + $elm$core$String$fromInt(
+									$elm$core$List$sum(
+										A2($elm$core$List$map, $author$project$Agents$remainingTasks, state.agents)))),
+								$elm$html$Html$text(
+								'\nAgents In Environment: ' + $elm$core$String$fromInt(
+									$elm$core$List$length(state.agents))),
 								$elm$html$Html$text(
 								'\nTime: ' + $elm$core$String$fromInt(state.time))
 							])),

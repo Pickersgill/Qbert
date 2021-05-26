@@ -49,6 +49,16 @@ getEventTime event =
         FailQueueEvent t _ -> t
         BadEvent _ -> -1
         
+serviceToColour : Service -> String
+serviceToColour service =
+    case service of
+        Green -> "Green"
+        Red -> "Red"
+        Blue -> "Blue"
+        Yellow -> "Yellow"
+        Orange -> "Orange"
+        Purple -> "Purple"
+        BadColour -> "Black"
 
 
 -- DECODERS
