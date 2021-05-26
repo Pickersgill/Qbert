@@ -2,7 +2,7 @@ module Events exposing (..)
 
 import Json.Decode exposing (..)
 import Debug exposing (log, toString)
-import List exposing (filter, map, maximum, range, drop)
+import List exposing (filter, map, maximum, range)
 import Dict exposing (..)
 import Tuple exposing (pair)
 
@@ -32,19 +32,11 @@ bucketByTime : EventList -> Dict Int EventList
 bucketByTime events =
     let
         maxTime = getMaxTime events
-    in Dict.fromList (getBucketPairs 0 (maxTime) events)
-
-getBucketPairs : Int -> Int -> EventList -> List (Int, EventList)
-getBucketPairs start end events =
-    if start > end then []
-    else
-        let
-            en = filterByTime events start
-        in (start, en) ::
-           getBucketPairs (start + 1)
-                          (end)
-                          (drop (List.length en) events)
-                          
+    in Dict.fromList (List.map2 
+           Tuple.pair
+           (range 0 maxTime)
+           (List.map (\n -> filterByTime events n) (range 0 maxTime))
+       )
 
 getMaxTime : EventList -> Int
 getMaxTime events =
@@ -55,39 +47,13 @@ getMaxTime events =
         Nothing -> 0
 
 filterByTime : EventList -> Int -> EventList
-filterByTime events t = 
-        fastFilter (\f -> hasTimeLessThan f t) (\e -> hasTime e t) events
-
-fastFilter : (a -> Bool) -> (a -> Bool) -> List a -> List a
-fastFilter skip include list =
-    let
-        head = List.head list
-        tail = safeTail list
-    in case head of
-        Just value ->
-            if skip value then fastFilter skip include tail
-            else if include value then value :: fastFilter skip include tail
-            else []
-        Nothing -> []
-    
+filterByTime events t = List.filter (\e -> hasTime e t) events
 
 partitionByTime : EventList -> Int -> (EventList, EventList)
 partitionByTime events t = List.partition (\e -> hasTime e t) events
 
-hasTimeLessThan : Event -> Int -> Bool
-hasTimeLessThan event t =
-    getEventTime event < t
-
 hasTime : Event -> Int -> Bool
 hasTime event t = getEventTime event == t
-
-safeTail : List a -> List a
-safeTail l =
-    let
-        t = List.tail l
-    in case t of
-        Just v -> v
-        Nothing -> []
 
 getEventTime : Event -> Int
 getEventTime event =

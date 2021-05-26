@@ -8,16 +8,24 @@ from minds import CleverMind, ClevererMind
 import environment
 import random
 
-TIMEOUT = 3000
-AGENTS = 50
-TASKS = 5
+TIMEOUT = 0
+AGENTS = 1
+TASKS = 50
+
+WIDTH = 1200
+HEIGHT = 800
+
+SERVERS = 1
+SERVICE_TIME = 5
 
 names = list(n for n in open("names.txt"))
 
 def generate_simple_env():
-    simpleEnv = Env(time_limit=TIMEOUT, w=600, h=600)
+    simpleEnv = Env(time_limit=TIMEOUT, w=WIDTH, h=HEIGHT)
     for service in SEnum:
-        simpleEnv.add_kiosk(service=service, servers=1, service_time=5)
+        simpleEnv.add_kiosk(service=service, servers=SERVERS, service_time=SERVICE_TIME)
+    for service in SEnum:
+        simpleEnv.add_kiosk(service=service, servers=SERVERS, service_time=SERVICE_TIME)
     
     return simpleEnv
 

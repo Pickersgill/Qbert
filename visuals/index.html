@@ -5499,10 +5499,211 @@ var $author$project$SeeQcumber$Ready = F2(
 	function (a, b) {
 		return {$: 'Ready', a: a, b: b};
 	});
-var $elm$json$Json$Decode$decodeString = _Json_runOnString;
 var $author$project$SeeQcumber$Log = F2(
 	function (a, b) {
 		return {$: 'Log', a: a, b: b};
+	});
+var $elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
+var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
+var $elm$core$Dict$Black = {$: 'Black'};
+var $elm$core$Dict$RBNode_elm_builtin = F5(
+	function (a, b, c, d, e) {
+		return {$: 'RBNode_elm_builtin', a: a, b: b, c: c, d: d, e: e};
+	});
+var $elm$core$Dict$Red = {$: 'Red'};
+var $elm$core$Dict$balance = F5(
+	function (color, key, value, left, right) {
+		if ((right.$ === 'RBNode_elm_builtin') && (right.a.$ === 'Red')) {
+			var _v1 = right.a;
+			var rK = right.b;
+			var rV = right.c;
+			var rLeft = right.d;
+			var rRight = right.e;
+			if ((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) {
+				var _v3 = left.a;
+				var lK = left.b;
+				var lV = left.c;
+				var lLeft = left.d;
+				var lRight = left.e;
+				return A5(
+					$elm$core$Dict$RBNode_elm_builtin,
+					$elm$core$Dict$Red,
+					key,
+					value,
+					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, lK, lV, lLeft, lRight),
+					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, rK, rV, rLeft, rRight));
+			} else {
+				return A5(
+					$elm$core$Dict$RBNode_elm_builtin,
+					color,
+					rK,
+					rV,
+					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, key, value, left, rLeft),
+					rRight);
+			}
+		} else {
+			if ((((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) && (left.d.$ === 'RBNode_elm_builtin')) && (left.d.a.$ === 'Red')) {
+				var _v5 = left.a;
+				var lK = left.b;
+				var lV = left.c;
+				var _v6 = left.d;
+				var _v7 = _v6.a;
+				var llK = _v6.b;
+				var llV = _v6.c;
+				var llLeft = _v6.d;
+				var llRight = _v6.e;
+				var lRight = left.e;
+				return A5(
+					$elm$core$Dict$RBNode_elm_builtin,
+					$elm$core$Dict$Red,
+					lK,
+					lV,
+					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, llK, llV, llLeft, llRight),
+					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, key, value, lRight, right));
+			} else {
+				return A5($elm$core$Dict$RBNode_elm_builtin, color, key, value, left, right);
+			}
+		}
+	});
+var $elm$core$Basics$compare = _Utils_compare;
+var $elm$core$Dict$insertHelp = F3(
+	function (key, value, dict) {
+		if (dict.$ === 'RBEmpty_elm_builtin') {
+			return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, key, value, $elm$core$Dict$RBEmpty_elm_builtin, $elm$core$Dict$RBEmpty_elm_builtin);
+		} else {
+			var nColor = dict.a;
+			var nKey = dict.b;
+			var nValue = dict.c;
+			var nLeft = dict.d;
+			var nRight = dict.e;
+			var _v1 = A2($elm$core$Basics$compare, key, nKey);
+			switch (_v1.$) {
+				case 'LT':
+					return A5(
+						$elm$core$Dict$balance,
+						nColor,
+						nKey,
+						nValue,
+						A3($elm$core$Dict$insertHelp, key, value, nLeft),
+						nRight);
+				case 'EQ':
+					return A5($elm$core$Dict$RBNode_elm_builtin, nColor, nKey, value, nLeft, nRight);
+				default:
+					return A5(
+						$elm$core$Dict$balance,
+						nColor,
+						nKey,
+						nValue,
+						nLeft,
+						A3($elm$core$Dict$insertHelp, key, value, nRight));
+			}
+		}
+	});
+var $elm$core$Dict$insert = F3(
+	function (key, value, dict) {
+		var _v0 = A3($elm$core$Dict$insertHelp, key, value, dict);
+		if ((_v0.$ === 'RBNode_elm_builtin') && (_v0.a.$ === 'Red')) {
+			var _v1 = _v0.a;
+			var k = _v0.b;
+			var v = _v0.c;
+			var l = _v0.d;
+			var r = _v0.e;
+			return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, k, v, l, r);
+		} else {
+			var x = _v0;
+			return x;
+		}
+	});
+var $elm$core$Dict$fromList = function (assocs) {
+	return A3(
+		$elm$core$List$foldl,
+		F2(
+			function (_v0, dict) {
+				var key = _v0.a;
+				var value = _v0.b;
+				return A3($elm$core$Dict$insert, key, value, dict);
+			}),
+		$elm$core$Dict$empty,
+		assocs);
+};
+var $elm$core$List$drop = F2(
+	function (n, list) {
+		drop:
+		while (true) {
+			if (n <= 0) {
+				return list;
+			} else {
+				if (!list.b) {
+					return list;
+				} else {
+					var x = list.a;
+					var xs = list.b;
+					var $temp$n = n - 1,
+						$temp$list = xs;
+					n = $temp$n;
+					list = $temp$list;
+					continue drop;
+				}
+			}
+		}
+	});
+var $elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(x);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $elm$core$List$tail = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(xs);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $author$project$Events$safeTail = function (l) {
+	var t = $elm$core$List$tail(l);
+	if (t.$ === 'Just') {
+		var v = t.a;
+		return v;
+	} else {
+		return _List_Nil;
+	}
+};
+var $author$project$Events$fastFilter = F3(
+	function (skip, include, list) {
+		fastFilter:
+		while (true) {
+			var tail = $author$project$Events$safeTail(list);
+			var head = $elm$core$List$head(list);
+			if (head.$ === 'Just') {
+				var value = head.a;
+				if (skip(value)) {
+					var $temp$skip = skip,
+						$temp$include = include,
+						$temp$list = tail;
+					skip = $temp$skip;
+					include = $temp$include;
+					list = $temp$list;
+					continue fastFilter;
+				} else {
+					if (include(value)) {
+						return A2(
+							$elm$core$List$cons,
+							value,
+							A3($author$project$Events$fastFilter, skip, include, tail));
+					} else {
+						return _List_Nil;
+					}
+				}
+			} else {
+				return _List_Nil;
+			}
+		}
 	});
 var $elm$core$Basics$negate = function (n) {
 	return -n;
@@ -5546,32 +5747,111 @@ var $author$project$Events$hasTime = F2(
 			$author$project$Events$getEventTime(event),
 			t);
 	});
-var $elm$core$List$partition = F2(
-	function (pred, list) {
-		var step = F2(
-			function (x, _v0) {
-				var trues = _v0.a;
-				var falses = _v0.b;
-				return pred(x) ? _Utils_Tuple2(
-					A2($elm$core$List$cons, x, trues),
-					falses) : _Utils_Tuple2(
-					trues,
-					A2($elm$core$List$cons, x, falses));
-			});
-		return A3(
-			$elm$core$List$foldr,
-			step,
-			_Utils_Tuple2(_List_Nil, _List_Nil),
-			list);
+var $author$project$Events$hasTimeLessThan = F2(
+	function (event, t) {
+		return _Utils_cmp(
+			$author$project$Events$getEventTime(event),
+			t) < 0;
 	});
-var $author$project$Events$partitionByTime = F2(
+var $author$project$Events$filterByTime = F2(
 	function (events, t) {
-		return A2(
-			$elm$core$List$partition,
+		return A3(
+			$author$project$Events$fastFilter,
+			function (f) {
+				return A2($author$project$Events$hasTimeLessThan, f, t);
+			},
 			function (e) {
 				return A2($author$project$Events$hasTime, e, t);
 			},
 			events);
+	});
+var $author$project$Events$getBucketPairs = F3(
+	function (start, end, events) {
+		if (_Utils_cmp(start, end) > 0) {
+			return _List_Nil;
+		} else {
+			var en = A2($author$project$Events$filterByTime, events, start);
+			return A2(
+				$elm$core$List$cons,
+				_Utils_Tuple2(start, en),
+				A3(
+					$author$project$Events$getBucketPairs,
+					start + 1,
+					end,
+					A2(
+						$elm$core$List$drop,
+						$elm$core$List$length(en),
+						events)));
+		}
+	});
+var $elm$core$List$maximum = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(
+			A3($elm$core$List$foldl, $elm$core$Basics$max, x, xs));
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $author$project$Events$getMaxTime = function (events) {
+	var max = $elm$core$List$maximum(
+		A2(
+			$elm$core$List$map,
+			function (e) {
+				return $author$project$Events$getEventTime(e);
+			},
+			events));
+	if (max.$ === 'Just') {
+		var val = max.a;
+		return val;
+	} else {
+		return 0;
+	}
+};
+var $author$project$Events$bucketByTime = function (events) {
+	var maxTime = $author$project$Events$getMaxTime(events);
+	return $elm$core$Dict$fromList(
+		A3($author$project$Events$getBucketPairs, 0, maxTime, events));
+};
+var $author$project$SeeQcumber$bucketLogs = F2(
+	function (env, events) {
+		return A2(
+			$author$project$SeeQcumber$Log,
+			env,
+			$author$project$Events$bucketByTime(events));
+	});
+var $elm$json$Json$Decode$decodeString = _Json_runOnString;
+var $elm$core$Dict$get = F2(
+	function (targetKey, dict) {
+		get:
+		while (true) {
+			if (dict.$ === 'RBEmpty_elm_builtin') {
+				return $elm$core$Maybe$Nothing;
+			} else {
+				var key = dict.b;
+				var value = dict.c;
+				var left = dict.d;
+				var right = dict.e;
+				var _v1 = A2($elm$core$Basics$compare, targetKey, key);
+				switch (_v1.$) {
+					case 'LT':
+						var $temp$targetKey = targetKey,
+							$temp$dict = left;
+						targetKey = $temp$targetKey;
+						dict = $temp$dict;
+						continue get;
+					case 'EQ':
+						return $elm$core$Maybe$Just(value);
+					default:
+						var $temp$targetKey = targetKey,
+							$temp$dict = right;
+						targetKey = $temp$targetKey;
+						dict = $temp$dict;
+						continue get;
+				}
+			}
+		}
 	});
 var $author$project$Agents$Agent = F5(
 	function (id, pos, dir, colour, tasks) {
@@ -5681,15 +5961,6 @@ var $elm$core$List$filter = F2(
 			_List_Nil,
 			list);
 	});
-var $elm$core$List$head = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return $elm$core$Maybe$Just(x);
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
-};
 var $author$project$Agents$getAgent = F2(
 	function (id, agents) {
 		return $elm$core$List$head(
@@ -5873,7 +6144,12 @@ var $author$project$SeeQcumber$doEvent = F2(
 	});
 var $author$project$SeeQcumber$performEvents = F2(
 	function (state, events) {
-		return A3($elm$core$List$foldl, $author$project$SeeQcumber$doEvent, state, events);
+		var _v0 = state.pause;
+		if (_v0) {
+			return state;
+		} else {
+			return A3($elm$core$List$foldl, $author$project$SeeQcumber$doEvent, state, events);
+		}
 	});
 var $author$project$SeeQcumber$doEvents = function (model) {
 	if (model.$ === 'Ready') {
@@ -5881,13 +6157,16 @@ var $author$project$SeeQcumber$doEvents = function (model) {
 		var env = _v1.a;
 		var events = _v1.b;
 		var state = model.b;
-		var eventSets = A2($author$project$Events$partitionByTime, events, state.time);
-		var eventsTodo = eventSets.a;
-		var remEvents = eventSets.b;
-		return A2(
-			$author$project$SeeQcumber$Ready,
-			A2($author$project$SeeQcumber$Log, env, remEvents),
-			A2($author$project$SeeQcumber$performEvents, state, eventsTodo));
+		var eventsTodo = A2($elm$core$Dict$get, state.time, events);
+		if (eventsTodo.$ === 'Just') {
+			var e = eventsTodo.a;
+			return A2(
+				$author$project$SeeQcumber$Ready,
+				A2($author$project$SeeQcumber$Log, env, events),
+				A2($author$project$SeeQcumber$performEvents, state, e));
+		} else {
+			return model;
+		}
 	} else {
 		return model;
 	}
@@ -5898,6 +6177,10 @@ var $elm$file$File$Select$file = F2(
 			$elm$core$Task$perform,
 			toMsg,
 			_File_uploadOne(mimes));
+	});
+var $author$project$SeeQcumber$RawLog = F2(
+	function (a, b) {
+		return {$: 'RawLog', a: a, b: b};
 	});
 var $author$project$SeeQcumber$Env = F3(
 	function (width, height, time_limit) {
@@ -6090,7 +6373,7 @@ var $author$project$Events$eventListDecoder = $elm$json$Json$Decode$list(
 		A2($elm$json$Json$Decode$field, 'event', $elm$json$Json$Decode$string)));
 var $author$project$SeeQcumber$logDecoder = A3(
 	$elm$json$Json$Decode$map2,
-	$author$project$SeeQcumber$Log,
+	$author$project$SeeQcumber$RawLog,
 	A2($elm$json$Json$Decode$field, 'env', $author$project$SeeQcumber$envDecoder),
 	A2($elm$json$Json$Decode$field, 'events', $author$project$Events$eventListDecoder));
 var $elm$file$File$toString = _File_toString;
@@ -6138,12 +6421,14 @@ var $author$project$SeeQcumber$update = F2(
 				if (log.$ === 'Err') {
 					return _Utils_Tuple2($author$project$SeeQcumber$Empty, $elm$core$Platform$Cmd$none);
 				} else {
-					var value = log.a;
+					var _v2 = log.a;
+					var env = _v2.a;
+					var events = _v2.b;
 					return _Utils_Tuple2(
 						A2(
 							$author$project$SeeQcumber$Ready,
-							value,
-							A4($author$project$SeeQcumber$EnvState, true, 0, _List_Nil, _List_Nil)),
+							A2($author$project$SeeQcumber$bucketLogs, env, events),
+							A4($author$project$SeeQcumber$EnvState, true, -1, _List_Nil, _List_Nil)),
 						$elm$core$Platform$Cmd$none);
 				}
 			case 'NextFrame':
@@ -6185,6 +6470,10 @@ var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
 var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
 var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
 var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
+var $author$project$SeeQcumber$offset = 20.0;
+var $author$project$SeeQcumber$fOffset = function (n) {
+	return n + $author$project$SeeQcumber$offset;
+};
 var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
 var $elm$core$String$fromFloat = _String_fromNumber;
 var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
@@ -6223,8 +6512,10 @@ var $avh4$elm_color$Color$toCssString = function (_v0) {
 			]));
 };
 var $author$project$SeeQcumber$drawAgent = function (agent) {
-	var y = $elm$core$String$fromFloat(agent.pos.y);
-	var x = $elm$core$String$fromFloat(agent.pos.x);
+	var y = $elm$core$String$fromFloat(
+		$author$project$SeeQcumber$fOffset(agent.pos.y));
+	var x = $elm$core$String$fromFloat(
+		$author$project$SeeQcumber$fOffset(agent.pos.x));
 	var col = $avh4$elm_color$Color$toCssString(agent.colour);
 	return A2(
 		$elm$svg$Svg$circle,
@@ -6263,8 +6554,10 @@ var $elm$svg$Svg$text_ = $elm$svg$Svg$trustedNode('text');
 var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
 var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
 var $author$project$SeeQcumber$drawKiosk = function (kiosk) {
-	var py = $elm$core$String$fromFloat(kiosk.entrance.y);
-	var px = $elm$core$String$fromFloat(kiosk.entrance.x);
+	var py = $elm$core$String$fromFloat(
+		$author$project$SeeQcumber$fOffset(kiosk.entrance.y));
+	var px = $elm$core$String$fromFloat(
+		$author$project$SeeQcumber$fOffset(kiosk.entrance.x));
 	var col = $author$project$Events$serviceToColour(kiosk.service);
 	return _List_fromArray(
 		[
@@ -6302,8 +6595,10 @@ var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
 var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
 var $author$project$SeeQcumber$envCanvas = F2(
 	function (env, state) {
-		var w = $elm$core$String$fromInt(env.width);
-		var h = $elm$core$String$fromInt(env.height);
+		var w = $elm$core$String$fromInt(
+			env.width + (2 * $elm$core$Basics$round($author$project$SeeQcumber$offset)));
+		var h = $elm$core$String$fromInt(
+			env.height + (2 * $elm$core$Basics$round($author$project$SeeQcumber$offset)));
 		return A2(
 			$elm$svg$Svg$svg,
 			_List_fromArray(
@@ -6444,9 +6739,6 @@ var $author$project$SeeQcumber$view = function (model) {
 						_List_Nil,
 						_List_fromArray(
 							[
-								$elm$html$Html$text(
-								'Events Remaining: ' + $elm$core$String$fromInt(
-									$elm$core$List$length(events))),
 								$elm$html$Html$text(
 								'\nTasks Remaining: ' + $elm$core$String$fromInt(
 									$elm$core$List$sum(

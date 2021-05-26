@@ -39,7 +39,8 @@ type alias JSON = String
 
 type alias Env = {width : Int, height : Int, time_limit : Int}
 
-type Log = Log Env Events.EventList
+type Log = Log Env Events.EventTimeDict
+type RawLog = RawLog Env Events.EventList
 
 type alias EnvState =
   {pause : Bool, time : Int, agents : AgentList, kiosks : KioskList}
@@ -64,6 +65,8 @@ type Msg = ChooseFile
          | NextFrame Posix
          | PlayPause
 
+bucketLogs env events = 
+    Log env (bucketByTime events)
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -77,7 +80,11 @@ update msg model =
         log = (decodeString logDecoder log_str)
       in case log of
         Err _ -> (Empty, Cmd.none)
-        Ok value -> ((Ready value (EnvState True 0 [] [])), Cmd.none)
+        Ok (RawLog env (events)) ->
+            ( 
+                (Ready (bucketLogs env (events)) (EnvState True -1 [] []))
+                , Cmd.none
+            )
     NextFrame time -> (updateTime model |> doEvents, Cmd.none)
     PlayPause -> case model of
         Ready log state -> (Ready log {state | pause = not state.pause}, Cmd.none)
@@ -97,16 +104,18 @@ doEvents model =
   case model of
     Ready (Log env events) state -> 
       let 
-        eventSets = partitionByTime events state.time
-        eventsTodo = first eventSets
-        remEvents = second eventSets
-      in Ready (Log env remEvents) (performEvents state eventsTodo)
+        eventsTodo = get state.time events
+      in case eventsTodo of
+        Just e -> Ready (Log env events) (performEvents state e)
+        Nothing -> model
 
     _ -> model
 
 performEvents : EnvState -> EventList -> EnvState
 performEvents state events = 
-  List.foldl (doEvent) state events
+    case state.pause of
+        True -> state
+        False -> List.foldl (doEvent) state events
 
 doEvent : Events.Event -> EnvState -> EnvState
 doEvent event state = 
@@ -168,8 +177,7 @@ view model =
     Ready (Log env events) state ->
         div [] [ 
           pre [] [
-            text ("Events Remaining: " ++ (String.fromInt (List.length events)))
-          , text ("\nTasks Remaining: " ++ 
+            text ("\nTasks Remaining: " ++ 
               (String.fromInt (sum (List.map remainingTasks state.agents))))
           , text ("\nAgents In Environment: " ++ 
               (String.fromInt (List.length state.agents)))
@@ -185,10 +193,18 @@ playButton paused =
     True -> button [onClick PlayPause] [text "Play"]
     False -> button [onClick PlayPause] [text "Pause"]
 
+offset = 20.0
+
+intOffset : Int -> Int
+intOffset n = n + round offset
+
+fOffset : Float -> Float
+fOffset n = n + offset
+
 envCanvas env state = 
   let
-    w = String.fromInt env.width
-    h = String.fromInt env.height
+    w = String.fromInt (env.width + (2 * round offset))
+    h = String.fromInt (env.height + (2 * round offset))
   in
     svg [SA.width w, SA.height h, fill "Black"] 
         (List.concat [[ rect [
@@ -205,8 +221,8 @@ envCanvas env state =
 drawKiosk : Kiosk -> List (Svg.Svg msg)
 drawKiosk kiosk =
   let
-    px = String.fromFloat kiosk.entrance.x
-    py = String.fromFloat kiosk.entrance.y
+    px = String.fromFloat (fOffset kiosk.entrance.x)
+    py = String.fromFloat (fOffset kiosk.entrance.y)
     col = serviceToColour kiosk.service
   in
   [
@@ -218,8 +234,8 @@ drawKiosk kiosk =
 drawAgent : Agent -> Svg.Svg msg
 drawAgent agent = 
   let
-    x = String.fromFloat agent.pos.x
-    y = String.fromFloat agent.pos.y
+    x = String.fromFloat (fOffset agent.pos.x)
+    y = String.fromFloat (fOffset agent.pos.y)
     col = Color.toCssString agent.colour
   in
   Svg.circle [cx x, cy y, fill col, stroke "black", r "5"] []
@@ -231,8 +247,8 @@ uploadButton = button [onClick ChooseFile] [text "Upload a log file"]
 
 -- DECODERS
 
-logDecoder : Decoder Log
-logDecoder = Json.Decode.map2 Log 
+logDecoder : Decoder RawLog
+logDecoder = Json.Decode.map2 RawLog 
              (field "env" envDecoder)
              (field "events" eventListDecoder)
 

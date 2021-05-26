@@ -32,7 +32,7 @@ bucketByTime : EventList -> Dict Int EventList
 bucketByTime events =
     let
         maxTime = getMaxTime events
-    in Dict.fromList (getBucketPairs 0 (maxTime) events)
+    in Dict.fromList (getBucketPairs 0 (getMaxTime events) events)
 
 getBucketPairs : Int -> Int -> EventList -> List (Int, EventList)
 getBucketPairs start end events =
