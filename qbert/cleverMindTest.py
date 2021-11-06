@@ -8,6 +8,8 @@ from minds import CleverMind, ClevererMind
 import environment
 import random
 
+# MODIFY THESE VALUES TO CHANGE THE SIMULATION:
+
 TIMEOUT = 0
 AGENTS = 1
 TASKS = 50
@@ -17,6 +19,8 @@ HEIGHT = 800
 
 SERVERS = 1
 SERVICE_TIME = 5
+
+# DON'T MODIFY THE REST OF THIS FILE UNLESS YOU KNO WHAT YOU'RE DOING
 
 names = list(n for n in open("names.txt"))
 
