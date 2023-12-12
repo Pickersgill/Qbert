@@ -17,7 +17,7 @@ number of tasks per agent, environment size, etc.
 
 After running the simulation an event log file will be generated.
 
-To visualiser is written in elm. You will need elm installed to build it.
+To visualiser is written in Elm. You will need Elm installed to build it.
 
 Whilst in the ```visuals``` directory, use ```elm make src/SeeQcumber.elm```to build the webpage.
 The webpage should be output in ```visuals/index.html```. Open the webpage and use the button to import
@@ -35,11 +35,12 @@ So given this problem, how long do the agents take to complete their tasks on av
 
 AND
 
-What tpyes of agent behaviour might be good for minimising these metrics?
+What types of agent behaviour might be good for minimising these metrics?
 
 ## The Solution
 
 To simulate this problem we first need to define some physics:
+
     + The agents are situated in a bounded 2-dimensional plane.
     + Time moves in discrete unit steps. We called these Unit Time Steps, UTS.
     + After each UTS the agent receives a set of observations from the environment.
@@ -52,12 +53,14 @@ that kiosk they may join the queue. Even if the kiosk is empty the agent must fi
 immediately, or continue moving around.
 
 The simulation is ended when:
+
     + No tasks remain
     + No agents are queueing
 
 ### Changing and Observing Agents
 
 The behaviour of agents is determined by a Mind. Each mind has:
+
     + Some persistent beliefs in the form of attributes.
     + A revise function which iterates the beliefs based on observations from the environment.
     + A decide function which chooses an action to take based on the beliefs.
