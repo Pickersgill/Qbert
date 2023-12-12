@@ -1,5 +1,5 @@
 # Qbert
-Queueing agent simulation.
+Simulation of task fulfilment by cognitive agents.
 
 ## Instructions For Building/Running QBert
 
@@ -10,7 +10,7 @@ Queueing agent simulation.
 
 ### Quickstart
 To generate event logs use ```qbert/cleverMindTest.py```. This will use a pretty simple default mind
-which simply targets the nearest (l2norm) kiosk for which it has a task.
+which targets the nearest (l2norm) kiosk for which it has a task.
 
 There are some values in ```qbert/cleverMindTest.py``` which can be changed to affect number of agents,
 number of tasks per agent, environment size, etc.
@@ -29,87 +29,45 @@ What's going on? The scenario:
 
     + N agents want to complete their tasks.
     + Each task can only be completed by a kiosk.
-    + Each kiosk has a finite number of servers and takes a set time to complete a service
-    + How long do the agents take to complete their tasks on average? As a whole? Minimum?
+    + Each kiosk has a finite number of servers a server is occupied whilst the task is being completed.
 
-The naive approach is for each agent to visit the kiosk for it's task in sequence. How good is the
-naive approach? Does it perform better than different strategies which use greater information:
+So given this problem, how long do the agents take to complete their tasks on average? As a whole? Minimum? Maximum (Makespan)?
 
-    + If the agents know the time of each kiosk, they could perform there tasks in order of time
-        taken or vise versa.
+AND
 
-    + If the agents know what each other agents tasks are, they can make some kind of informed decision 
-        based on how many agents have to visit each kiosk. Does this work better or worse than the naive
-        approach.
+What tpyes of agent behaviour might be good for minimising these metrics?
 
 ## The Solution
 
-Let's build a little world (environment) for our agents. In the environment they can move around in 2d space
-and visit kiosks. When they visit a kiosk they join the queue for that kiosk. The agents are each represented
-by a mind. The mind will tell the environment what each agent should do at each UTS (Unit Time Step). 
-It is possible for one mind to command many agents, and so it may be better to model this problem with a 
-Mind object which accepts as a visitor the agent object for whom it is deciding an action.
+To simulate this problem we first need to define some physics:
+    + The agents are situated in a bounded 2-dimensional plane.
+    + Time moves in discrete unit steps. We called these Unit Time Steps, UTS.
+    + After each UTS the agent receives a set of observations from the environment.
+    + Using the observations, and any stored knowledge, the agent chooses to act. Either turning on the spot or moving forwards a short distance.
 
-### The Environment:
+Okay, so we have defined the mechanism by which agents can move around and make decisions, but how do they complete tasks?
 
-+ The environment contains all the agents' physical positions.
- 
-+ It wraps a data structure containing each agent
-  object.
- 
-+ Agents are free to move in 2d space within a bounded plane.
- 
-+ The kiosks exist at the edges of plane.
- 
-+ When an agents enters a Kiosk it is added to the queue for that kiosk.
+Each task may only be completed by a single kiosk, although a kiosk may have many servers. The kiosks are located, physically, around the perimeter of the environment. When an agent enters a kiosk, if they have a task for
+that kiosk they may join the queue. Even if the kiosk is empty the agent must first join the queue and then be served at the beginning of the next UTS. Once the kiosk serves the agent they are free to join the queue again
+immediately, or continue moving around.
 
-+ The agent leaves the the kiosk when it is served.
+The simulation is ended when:
+    + No tasks remain
+    + No agents are queueing
 
-+ During each UTS the environment will ask the agents what they want to do and enact their action.
+### Changing and Observing Agents
 
-+ Agent actions are decided sequentialy. The decisions of the first agent in the queue may affect the
-    decision of a later agent.
+The behaviour of agents is determined by a Mind. Each mind has:
+    + Some persistent beliefs in the form of attributes.
+    + A revise function which iterates the beliefs based on observations from the environment.
+    + A decide function which chooses an action to take based on the beliefs.
 
-+ The environment should be capable of running headless and produce some kind of record for data analysis.
+The simulator produces output logs in the form of ordered discrete time events. Theses events are used to reconstruct the execution and visualise the positions of the agents, remaining jobs and queue lengths.
 
-+ This record could be a list of events which can be interpreted later.
+### Technical Footnotes
 
-+ The constructor for the environment should accept arguments for:
+The environment requests each agent action in sequence but does not apply the side effects of their actions until after ALL agents have given their choices. The actions are then applied in sequence, meaning later actions
+are subject to the side effects of prior actions. It is the responsibility of each agent to confirm that it's previous actions had the desired effect.
 
-    - The number of agents with each mind type.
-
-    - The size of the environment.
-
-    - Some description of the kiosks. (Possibly a list of kiosk objects).
-
-### The Agents:
-
-+ Each agent probably has a colour identifying it. This helps when there are many minds acting in the
-    same environment
-
-+ The agents themselves are really just a collection of attributes describing the agents position, queueing
-    status, task list etc.
-
-+ The agent will be assigned a mind at birth (dystopian!). It will ask the mind what it should do when
-    appropriate.
-
-### The Minds:
-
-+ The minds must all look the same, they are an interface. The mind doesn't store any data about agents. 
-    It is a collection of functions which will decide how an agent should behave.
-
-+ The available actions should be predefined. Really the only thing the agent needs to decide is which queue
-    to "target" but a health set of actions would be: ["run", "walk", "face", "queue"]
-
-### The Kiosks:
-
-+ A kiosk is basically a queue wrapper.
-
-+ It needs to store how many agents are queueing.
-
-+ How many servers there are.
-
-+ How long (UTS) does a server take.
-
-+ What service is it providing?
+Where actions occur during the same UTS the execution order chosen by the environment is also used during the visualisation.
 
